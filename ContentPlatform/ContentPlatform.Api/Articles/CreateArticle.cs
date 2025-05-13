@@ -6,6 +6,7 @@ using FluentValidation;
 using Mapster;
 using MassTransit;
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
 using Shared;
 
 namespace ContentPlatform.Api.Articles;
@@ -44,12 +45,14 @@ public static class CreateArticle
         private readonly ApplicationDbContext _dbContext;
         private readonly IValidator<Command> _validator;
         private readonly IPublishEndpoint _publishEndpoint;
+        private readonly HybridCache _hybridCache;
 
-        public Handler(ApplicationDbContext dbContext, IValidator<Command> validator, IPublishEndpoint publishEndpoint)
+        public Handler(ApplicationDbContext dbContext, IValidator<Command> validator, IPublishEndpoint publishEndpoint, HybridCache hybridCache)
         {
             _dbContext = dbContext;
             _validator = validator;
             _publishEndpoint = publishEndpoint;
+            _hybridCache = hybridCache;
         }
 
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -82,7 +85,7 @@ public static class CreateArticle
                     CreatedOnUtc = article.CreatedOnUtc
                 },
                 cancellationToken);
-
+            await _hybridCache.RemoveAsync("articles",cancellationToken);
             return article.Id;
         }
     }

@@ -2,6 +2,9 @@
 using ContentPlatform.Api.Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
+using Newtonsoft.Json;
 using Shared;
 
 namespace ContentPlatform.Api.Articles;
@@ -28,28 +31,32 @@ public static class GetArticles
     internal sealed class Handler : IRequestHandler<Query, Result<List<Response>>>
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly HybridCache _hybridCache;
+        private readonly IDistributedCache distributedCache;
 
-        public Handler(ApplicationDbContext dbContext)
+        public Handler(ApplicationDbContext dbContext, HybridCache hybridCache, IDistributedCache distributedCache)
         {
             _dbContext = dbContext;
+            _hybridCache = hybridCache;
+            this.distributedCache = distributedCache;
         }
 
         public async Task<Result<List<Response>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var articleResponse = await _dbContext
-                .Articles
-                .AsNoTracking()
-                .Select(article => new Response
-                {
-                    Id = article.Id,
-                    Title = article.Title,
-                    Content = article.Content,
-                    Tags = article.Tags,
-                    CreatedOnUtc = article.CreatedOnUtc,
-                    PublishedOnUtc = article.PublishedOnUtc
-                })
-                .ToListAsync();
-
+            var articleResponse = await _hybridCache.GetOrCreateAsync("articles", async (ct) =>
+            {
+                return await _dbContext.Articles.AsNoTracking()
+                    .Select(article => new Response
+                    {
+                        Id = article.Id,
+                        Title = article.Title,
+                        Content = article.Content,
+                        Tags = article.Tags,
+                        CreatedOnUtc = article.CreatedOnUtc,
+                        PublishedOnUtc = article.PublishedOnUtc
+                    })
+                    .ToListAsync();
+            },cancellationToken: cancellationToken);
             return articleResponse;
         }
     }

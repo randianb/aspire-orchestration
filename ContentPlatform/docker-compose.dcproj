@@ -16,4 +16,8 @@
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Directory.Build.props" />
+    <Content Include="Directory.Packages.props" />
+  </ItemGroup>
 </Project>

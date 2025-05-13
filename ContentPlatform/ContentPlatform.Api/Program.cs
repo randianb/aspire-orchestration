@@ -1,9 +1,12 @@
 using Carter;
+using ContentPlatform.Api;
 using ContentPlatform.Api.Database;
 using ContentPlatform.Api.Extensions;
 using FluentValidation;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using ZiggyCreatures.Caching.Fusion;
+using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +39,9 @@ builder.Services.AddMassTransit(busConfigurator =>
     });
 });
 
+builder.AddRedisDistributedCache("contentplatform-cache");
+builder.Services.AddFusionCache().AsHybridCache().
+    WithRegisteredDistributedCache() .WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
 var app = builder.Build();
 
 app.MapDefaultEndpoints();

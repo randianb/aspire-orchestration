@@ -4,7 +4,9 @@ using Contracts;
 using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Shared;
+using StackExchange.Redis;
 
 namespace ContentPlatform.Api.Articles;
 
@@ -19,11 +21,12 @@ public static class DeleteArticle
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly IPublishEndpoint _publishEndpoint;
-
-        public Handler(ApplicationDbContext dbContext, IPublishEndpoint publishEndpoint)
+        private readonly HybridCache _hybridCache;
+        public Handler(ApplicationDbContext dbContext, IPublishEndpoint publishEndpoint, HybridCache hybridCache)
         {
             _dbContext = dbContext;
             _publishEndpoint = publishEndpoint;
+            _hybridCache = hybridCache;
         }
 
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -45,7 +48,7 @@ public static class DeleteArticle
             await _dbContext.SaveChangesAsync(cancellationToken);
 
             await _publishEndpoint.Publish(new ArticleDeletedEvent(article.Id), cancellationToken);
-
+            await _hybridCache.RemoveAsync("articles", cancellationToken);
             return Result.Success();
         }
     }

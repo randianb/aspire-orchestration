@@ -7,18 +7,23 @@ var postgres = builder.AddPostgres("contentplatform-db")
 
 var rabbitMq = builder.AddRabbitMQ("contentplatform-mq")
     .WithManagementPlugin();
+var cache = builder.AddRedis("contentplatform-cache");
 
 builder.AddProject<Projects.ContentPlatform_Api>("contentplatform-api")
     .WithReference(postgres)
     .WithReference(rabbitMq)
+    .WithReference(cache)
     .WaitFor(postgres)
-    .WaitFor(rabbitMq);
+    .WaitFor(rabbitMq)
+    .WaitFor(cache)
+    ;
 
 builder.AddProject<Projects.ContentPlatform_Reporting_Api>("contentplatform-reporting-api")
     .WithReference(postgres)
     .WithReference(rabbitMq)
     .WaitFor(postgres)
-    .WaitFor(rabbitMq);
+    .WaitFor(rabbitMq)
+    .WaitFor(cache);
 
 builder.AddProject<Projects.ContentPlatform_Presentation>("contentplatform-presentation");
 

@@ -10,7 +10,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 builder.Services.AddHttpClient("ContentPlatform.Api", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:5001");
+    client.BaseAddress = new Uri("http://localhost:7000");
 });
 
 await builder.Build().RunAsync();
