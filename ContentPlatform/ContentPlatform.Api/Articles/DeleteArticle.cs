@@ -6,7 +6,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Shared;
-using StackExchange.Redis;
 
 namespace ContentPlatform.Api.Articles;
 
