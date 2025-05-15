@@ -1,10 +1,22 @@
+using System.Globalization;
 using Carter;
 using ContentPlatform.Api;
+using ContentPlatform.Api.Busi.Channel.EventHandler;
+using ContentPlatform.Api.Busi.Driver.EventHandler;
+using ContentPlatform.Api.Busi.Logic;
+using ContentPlatform.Api.Busi.Logic.Common;
+using ContentPlatform.Api.Busi.Logic.EdgeDriver;
+using ContentPlatform.Api.Busi.Logic.Enums;
+using ContentPlatform.Api.Busi.Tag.EventHandler;
 using ContentPlatform.Api.Database;
 using ContentPlatform.Api.Extensions;
+using ContentPlatform.Api.Repository;
 using FluentValidation;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Tipa.Commons;
+using Tipa.EFCoreExtend;
+using Tipa.ReflectionHelper;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 
@@ -24,12 +36,56 @@ var assembly = typeof(Program).Assembly;
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 
 builder.Services.AddCarter();
+var assemblies = ReflectionHelper.GetAllReferencedAssemblies();
+
+builder.Services.RunModuleInitializers(assemblies);
+
+builder.Services.ConfigureRepository();
+builder.Services.AddHttpClient("Dk", client =>
+{
+    string dk = builder.Configuration.GetSection("Dk:Url").Value;
+    client.BaseAddress = new Uri(dk);
+});
+builder.Services.AddScoped<ValueParserService>();
+builder.Services.AddScoped<TagService>();
+builder.Services.AddScoped<OpcUaEdgeDriver>();
+builder.Services.AddScoped<OpcDaEdgeDriver>();
+builder.Services.AddSingleton<IEdgeDriverFactory,EdgeDriverFactory>();
+
+builder.Services.AddTransient<Constants.EdgeDriverResolver>(serviceProvider => type =>
+{
+    switch (type)
+    {
+        case DriverTypeEnum.OpcUa:
+            return serviceProvider.GetRequiredService<OpcUaEdgeDriver>();
+        case DriverTypeEnum.OpcDa:
+            return serviceProvider.GetRequiredService<OpcDaEdgeDriver>();
+        default:
+            throw new ArgumentException("Unknown service name");
+    }
+});
 
 builder.Services.AddValidatorsFromAssembly(assembly);
 
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
+    
+    busConfigurator.AddConsumer<DriverCreatedConsumer>();
+    busConfigurator.AddConsumer<DriverUpdatedConsumer>();
+    busConfigurator.AddConsumer<DriverDeletedConsumer>();
+    
+    
+    busConfigurator.AddConsumer<TagCreatedConsumer>();
+    busConfigurator.AddConsumer<TagUpdatedConsumer>();
+    busConfigurator.AddConsumer<TagDeletedConsumer>();
+    busConfigurator.AddConsumer<TagChangeConsumer>();
+    
+    
+    busConfigurator.AddConsumer<ChannelCreatedConsumer>();
+    busConfigurator.AddConsumer<ChannelUpdatedConsumer>();
+    busConfigurator.AddConsumer<ChannelDeletedConsumer>();
+    busConfigurator.AddConsumer<DKESNConsumer>();
     
     busConfigurator.UsingRabbitMq((context, configurator) =>
     {
@@ -40,8 +96,17 @@ builder.Services.AddMassTransit(busConfigurator =>
 });
 
 builder.AddRedisDistributedCache("contentplatform-cache");
-builder.Services.AddFusionCache().AsHybridCache().
+var entryOptions = new FusionCacheEntryOptions().SetDuration(TimeSpan.FromMinutes(10));
+builder.Services.AddFusionCache()
+    .WithDefaultEntryOptions(entryOptions)
+    .WithPostSetup((sp, c) =>
+    {
+        c.DefaultEntryOptions.Duration = TimeSpan.FromMinutes(5);
+    })
+    .AsHybridCache().
     WithRegisteredDistributedCache() .WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
+
+builder.Services.AddHostedService<DriverRunBackgroundService>();
 var app = builder.Build();
 
 app.MapDefaultEndpoints();

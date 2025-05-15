@@ -1,0 +1,192 @@
+﻿@page "/Driver"
+@inject IHttpClientFactory HttpClientFactory
+@using System.Text.Json
+@using System.Text.Json.Serialization
+
+<PageTitle>Driver</PageTitle>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Driver Management</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h2 class="mb-3">Create New Driver</h2>
+            <EditForm Model="@newDriver" OnValidSubmit="CreateDriver" class="mb-4">
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
+
+                <div class="mb-3">
+                    <label for="driverCode" class="form-label">DriverCode:</label>
+                    <InputText id="driverCode" @bind-Value="newDriver.DriverCode" class="form-control"/>
+                </div>
+                <div class="mb-3">
+                    <label for="driverType" class="form-label">DriverType:</label>
+                    <InputNumber id="driverType" @bind-Value="newDriver.DriverType" class="form-control"/>
+                </div>
+                <div class="mb-3">
+                    <label for="machineCode" class="form-label">MachineCode:</label>
+                    <InputText id="machineCode" @bind-Value="newDriver.MachineCode" class="form-control"/>
+                </div>
+                <div class="mb-3">
+                    <label for="serverName" class="form-label">ServerName:</label>
+                    <InputText id="serverName" @bind-Value="newDriver.ServerName" class="form-control"/>
+                </div>
+                <div class="mb-3">
+                    <label for="serverUrl" class="form-label">ServerUrl:</label>
+                    <InputText id="serverUrl" @bind-Value="newDriver.ServerUrl" class="form-control"/>
+                </div>
+                <div class="mb-3">
+                    <label for="hasIdentity" class="form-label">HasIdentity:</label>
+                    <InputCheckbox id="hasIdentity" @bind-Value="newDriver.HasIdentity" class="form-control"/>
+                </div>
+                <div class="mb-3">
+                    <label for="userName" class="form-label">UserName:</label>
+                    <InputText id="userName" @bind-Value="newDriver.UserName" class="form-control"/>
+                </div>
+                <div class="mb-3">
+                    <label for="passWord" class="form-label">PassWord:</label>
+                    <InputText id="passWord" @bind-Value="newDriver.PassWord" class="form-control"/>
+                </div>
+               
+                <button type="submit" class="btn btn-primary">Create Driver</button>
+            </EditForm>
+        </div>
+
+        <div class="col-md-6">
+            <h2 class="mb-3">Driver List</h2>
+            <button @onclick="LoadDrivers" class="btn btn-primary mb-3">Refresh Drivers</button>
+            @if (drivers != null && drivers.Any())
+            {
+                <div class="list-group">
+                    @foreach (var driver in drivers)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-1">@driver.DriverCode</h5>
+                                <p class="mb-1">@driver.DriverType </p>
+                                <p class="mb-1">@driver.MachineCode </p>
+                                <p class="mb-1">@driver.ServerName </p>
+                                <p class="mb-1">@driver.ServerUrl </p>
+                                <p class="mb-1">@driver.HasIdentity </p>
+                                <p class="mb-1">@driver.UserName </p>
+                                <p class="mb-1">@driver.PassWord </p>
+                            </div>
+                            <button @onclick="() => DeleteDriver(driver.Id)" class="btn btn-link text-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button @onclick="() => ReStartDriver(driver.Id)" class="btn btn-link text-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>No drivers found.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private DriverRequest newDriver = new();
+    private string tagsInput = "";
+    private List<DriverResponse> drivers;
+    private HttpClient httpClient;
+
+    protected override void OnInitialized()
+    {
+        httpClient = HttpClientFactory.CreateClient("ContentPlatform.Api");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDrivers();
+    }
+
+    private async Task CreateDriver()
+    {
+        // newDriver.Tags = tagsInput.Split(',').Select(t => t.Trim()).ToList();
+        var response = await httpClient.PostAsJsonAsync("/api/drivers", newDriver);
+        if (response.IsSuccessStatusCode)
+        {
+            // Clear the form
+            newDriver = new();
+            tagsInput = "";
+
+            // Refresh the driver list
+            await LoadDrivers();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+        }
+    }
+
+    private async Task LoadDrivers()
+    {
+        var response = await httpClient.GetAsync("/api/drivers");
+        if (response.IsSuccessStatusCode)
+        {
+            drivers = await response.Content.ReadFromJsonAsync<List<DriverResponse>>();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+            drivers = new List<DriverResponse>();
+        }
+    }
+
+    private async Task DeleteDriver(Guid id)
+    {
+        var response = await httpClient.DeleteAsync($"/api/drivers/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadDrivers();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+        }
+    }
+    private async Task ReStartDriver(Guid id)
+    {
+        var response = await httpClient.PostAsJsonAsync($"/api/driver/restart/{id}","");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadDrivers();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+        }
+    }
+
+    public class DriverRequest
+    {
+        public string DriverCode { get; set; }
+        public int DriverType { get; set; }
+        public string MachineCode { get; set; }
+        public string ServerName { get; set; }
+        public string ServerUrl { get; set; }
+        public bool HasIdentity { get; set; }
+        public string UserName { get; set; }
+        public string PassWord { get; set; }
+    }
+
+    public class DriverResponse
+    {
+        [JsonPropertyName("id")] public Guid Id { get; set; }
+
+        public string DriverCode { get; set; }
+        public int DriverType { get; set; }
+        public string MachineCode { get; set; }
+        public string ServerName { get; set; }
+        public string ServerUrl { get; set; }
+        public bool HasIdentity { get; set; }
+        public string UserName { get; set; }
+        public string PassWord { get; set; }
+    }
+
+}

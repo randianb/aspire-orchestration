@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>false</InvariantGlobalization>
     <UserSecretsId>91ed30e5-3b99-46bd-a6b2-34049ae1200e</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
@@ -30,12 +31,28 @@
     <PackageReference Include="Tipa.EFCoreExtend" Version="1.0.0"/>
     <PackageReference Include="Tipa.FunctionQuery" Version="1.0.0"/>
     <PackageReference Include="Tipa.JsonExtern" Version="1.0.0"/>
-  </ItemGroup>
+    <PackageReference Include="Tipa.ReflectionHelper" Version="1.0.0"/>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
 
+    <PackageReference Include="OPCUaClient" Version="1.7.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.11.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.11.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.11.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" />
+    <PackageReference Include="TitaniumAS.Opc.Client.Core.Design" Version="1.0.2.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="ProgramExtensions.cs">
+      <DependentUpon>Program.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ContentPlatform.ServiceDefaults\ContentPlatform.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Contracts\Contracts.csproj" />
     <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Schema\" />
   </ItemGroup>
 
 </Project>

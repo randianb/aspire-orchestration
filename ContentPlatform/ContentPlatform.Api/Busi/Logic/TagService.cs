@@ -1,0 +1,52 @@
+﻿using System.Data.Common;
+using ContentPlatform.Api.Busi.Logic.Common;
+using ContentPlatform.Api.Busi.Tag.Api;
+using ContentPlatform.Api.Entities;
+using ContentPlatform.Api.Repository;
+using ContentPlatform.Api.Repository.Tag;
+using Mapster;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
+namespace ContentPlatform.Api.Busi.Logic;
+
+public class TagService(ITagRepository iTagRepository,ISender sender, ValueParserService valueParserService)
+{
+
+    public async Task AddOrUpdateTagAsync(string se, string value)
+    {
+        try
+        {
+            var tag = await iTagRepository.GetQuery(true).FirstOrDefaultAsync(x=>x.TagCode==se);
+            if (tag != null)
+            {
+                valueParserService.ConvertType(value, tag);
+                var command = tag.Adapt<UpdateTag.Command>();
+                var result = await sender.Send(command);
+            }
+            else
+            {
+                var tagEntity = new TagEntity()
+                {
+                    Id = Guid.NewGuid(),
+                    TagCode= se,
+                    DataType= "string",
+                    CreateTime= DateTime.UtcNow,
+                    Value = new ObjValue(){Str = value}
+                };
+                var command = tagEntity.Adapt<CreateTag.Command>();
+                var result = await sender.Send(command);
+            }
+
+         
+        }
+        catch (Exception ex)
+        {
+            // 处理异常
+            throw;
+        }
+        finally
+        {
+        }
+    }
+}

@@ -19,7 +19,7 @@ namespace ContentPlatform.Api.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("content")
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -40,7 +40,7 @@ namespace ContentPlatform.Api.Migrations
                     b.Property<DateTime?>("PublishedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<List<string>>("Tags")
+                    b.PrimitiveCollection<List<string>>("Tags")
                         .IsRequired()
                         .HasColumnType("text[]");
 
@@ -51,6 +51,314 @@ namespace ContentPlatform.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Articles", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.ChannelEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChannelCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Desc")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsSchedule")
+                        .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<List<string>>("SenderCodes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.PrimitiveCollection<List<string>>("TagCodes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("Topic")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChannelCode")
+                        .IsUnique();
+
+                    b.ToTable("Channels", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.ChannelTagEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChannelCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Desc")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EquipCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GroupCode")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastUpdateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastValueJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("LastValueJson");
+
+                    b.Property<string>("TagCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ValueJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("ValueJson");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagCode", "ChannelCode")
+                        .IsUnique();
+
+                    b.ToTable("ChannelTagEntity", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.DriverEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DriverCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("DriverType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("HasIdentity")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MachineCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PassWord")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ServerName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ServerUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverCode")
+                        .IsUnique();
+
+                    b.ToTable("Drivers", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.EquipEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Desc")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EquipCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EquipName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipCode")
+                        .IsUnique();
+
+                    b.ToTable("EquipEntity", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.GroupEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Desc")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EquipCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("GroupCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipCode", "GroupCode")
+                        .IsUnique();
+
+                    b.ToTable("GroupEntity", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.MachineEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Desc")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MachineCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MachineCode")
+                        .IsUnique();
+
+                    b.ToTable("MachineEntity", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.SenderEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Desc")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DriverCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MachineCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SenderCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SenderType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderCode")
+                        .IsUnique();
+
+                    b.ToTable("SenderEntity", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.TagEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Desc")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DriverCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EquipCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GroupCode")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastUpdateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastValueJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("LastValueJson");
+
+                    b.Property<double?>("Scaling")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Shifting")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("TagCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ValueJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("ValueJson");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipCode", "GroupCode", "TagCode")
+                        .IsUnique();
+
+                    b.ToTable("Tags", "content");
                 });
 #pragma warning restore 612, 618
         }
