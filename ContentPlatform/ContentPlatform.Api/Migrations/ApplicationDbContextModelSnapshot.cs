@@ -139,7 +139,33 @@ namespace ContentPlatform.Api.Migrations
                     b.HasIndex("TagCode", "ChannelCode")
                         .IsUnique();
 
-                    b.ToTable("ChannelTagEntity", "content");
+                    b.ToTable("ChannelTags", "content");
+                });
+
+            modelBuilder.Entity("ContentPlatform.Api.Entities.ChannelTagHistoryEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BodyJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("BodyJson");
+
+                    b.Property<string>("ChannelCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SimpleBodyJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("SimpleBodyJson");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ChannelTagHistories", "content");
                 });
 
             modelBuilder.Entity("ContentPlatform.Api.Entities.DriverEntity", b =>
@@ -278,16 +304,17 @@ namespace ContentPlatform.Api.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Desc")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("DriverCode")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("MachineCode")
-                        .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("OptionsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("OptionsJson");
 
                     b.Property<string>("SenderCode")
                         .IsRequired()
@@ -301,7 +328,7 @@ namespace ContentPlatform.Api.Migrations
                     b.HasIndex("SenderCode")
                         .IsUnique();
 
-                    b.ToTable("SenderEntity", "content");
+                    b.ToTable("Senders", "content");
                 });
 
             modelBuilder.Entity("ContentPlatform.Api.Entities.TagEntity", b =>

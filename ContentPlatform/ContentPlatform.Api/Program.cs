@@ -7,6 +7,7 @@ using ContentPlatform.Api.Busi.Logic;
 using ContentPlatform.Api.Busi.Logic.Common;
 using ContentPlatform.Api.Busi.Logic.EdgeDriver;
 using ContentPlatform.Api.Busi.Logic.Enums;
+using ContentPlatform.Api.Busi.Sender.EventHandler;
 using ContentPlatform.Api.Busi.Tag.EventHandler;
 using ContentPlatform.Api.Database;
 using ContentPlatform.Api.Extensions;
@@ -14,6 +15,7 @@ using ContentPlatform.Api.Repository;
 using FluentValidation;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Serialization;
 using Tipa.Commons;
 using Tipa.EFCoreExtend;
 using Tipa.ReflectionHelper;
@@ -23,7 +25,6 @@ using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o => o.CustomSchemaIds(id => id.FullName!.Replace('+', '-')));
 builder.Services.AddCors();
@@ -41,16 +42,17 @@ var assemblies = ReflectionHelper.GetAllReferencedAssemblies();
 builder.Services.RunModuleInitializers(assemblies);
 
 builder.Services.ConfigureRepository();
-builder.Services.AddHttpClient("Dk", client =>
-{
-    string dk = builder.Configuration.GetSection("Dk:Url").Value;
-    client.BaseAddress = new Uri(dk);
-});
+builder.Services.AddHttpClient();
+// builder.Services.AddHttpClient("Dk", client =>
+// {
+//     string dk = builder.Configuration.GetSection("Dk:Url").Value;
+//     client.BaseAddress = new Uri(dk);
+// });
 builder.Services.AddScoped<ValueParserService>();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<OpcUaEdgeDriver>();
 builder.Services.AddScoped<OpcDaEdgeDriver>();
-builder.Services.AddSingleton<IEdgeDriverFactory,EdgeDriverFactory>();
+builder.Services.AddSingleton<IEdgeDriverFactory, EdgeDriverFactory>();
 
 builder.Services.AddTransient<Constants.EdgeDriverResolver>(serviceProvider => type =>
 {
@@ -70,23 +72,29 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 builder.Services.AddMassTransit(busConfigurator =>
 {
     busConfigurator.SetKebabCaseEndpointNameFormatter();
-    
+
     busConfigurator.AddConsumer<DriverCreatedConsumer>();
     busConfigurator.AddConsumer<DriverUpdatedConsumer>();
     busConfigurator.AddConsumer<DriverDeletedConsumer>();
-    
-    
+
+
     busConfigurator.AddConsumer<TagCreatedConsumer>();
     busConfigurator.AddConsumer<TagUpdatedConsumer>();
     busConfigurator.AddConsumer<TagDeletedConsumer>();
     busConfigurator.AddConsumer<TagChangeConsumer>();
-    
-    
+
+
+    busConfigurator.AddConsumer<SenderCreatedConsumer>();
+    busConfigurator.AddConsumer<SenderUpdatedConsumer>();
+    busConfigurator.AddConsumer<SenderDeletedConsumer>();
+    busConfigurator.AddConsumer<DkSenderConsumer>();
+
+
     busConfigurator.AddConsumer<ChannelCreatedConsumer>();
     busConfigurator.AddConsumer<ChannelUpdatedConsumer>();
     busConfigurator.AddConsumer<ChannelDeletedConsumer>();
-    busConfigurator.AddConsumer<DKESNConsumer>();
-    
+    busConfigurator.AddConsumer<ChannelTagChangedConsumer>();
+
     busConfigurator.UsingRabbitMq((context, configurator) =>
     {
         configurator.Host(builder.Configuration.GetConnectionString("contentplatform-mq"));
@@ -99,12 +107,8 @@ builder.AddRedisDistributedCache("contentplatform-cache");
 var entryOptions = new FusionCacheEntryOptions().SetDuration(TimeSpan.FromMinutes(10));
 builder.Services.AddFusionCache()
     .WithDefaultEntryOptions(entryOptions)
-    .WithPostSetup((sp, c) =>
-    {
-        c.DefaultEntryOptions.Duration = TimeSpan.FromMinutes(5);
-    })
-    .AsHybridCache().
-    WithRegisteredDistributedCache() .WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
+    .WithPostSetup((sp, c) => { c.DefaultEntryOptions.Duration = TimeSpan.FromMinutes(5); })
+    .AsHybridCache().WithRegisteredDistributedCache().WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
 
 builder.Services.AddHostedService<DriverRunBackgroundService>();
 var app = builder.Build();

@@ -36,7 +36,24 @@
 
                 <div class="mb-3">
                     <label for="dataType" class="form-label">DataType:</label>
-                    <InputText id="dataType" @bind-Value="newTag.DataType" class="form-control"/>
+                    <InputSelect id="dataType" @bind-Value="newTag.DataType" class="form-control">
+                        <option value="boolean">Boolean</option>
+                        <option value="string">String</option>
+                        <option value="double">Double</option>
+                        <option value="single">Single</option>
+                        <option value="decimal">Decimal</option>
+                        <option value="bool">Bool</option>
+                        <option value="char">Char</option>
+                        <option value="byte">Byte</option>
+                        <option value="single">Single</option>
+                        <option value="int16">Int16</option>
+                        <option value="uInt16">UInt16</option>
+                        <option value="int32">Int32</option>
+                        <option value="uInt32">UInt32</option>
+                        <option value="int64">Int64</option>
+                        <option value="uInt64">UInt64</option>
+                        <option value="dateTime">DateTime</option>
+                    </InputSelect>
                 </div>
 
                 <div class="mb-3">
@@ -146,9 +163,10 @@
             // Handle error - you might want to display an error message
         }
     }
+
     private async Task ReadTag(Guid id)
     {
-        var response = await httpClient.PostAsJsonAsync($"/api/tag/read/{id}","");
+        var response = await httpClient.PostAsJsonAsync($"/api/tag/read/{id}", "");
         if (response.IsSuccessStatusCode)
         {
             await LoadTags();

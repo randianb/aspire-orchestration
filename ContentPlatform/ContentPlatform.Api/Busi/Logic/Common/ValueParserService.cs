@@ -215,13 +215,13 @@ public class ValueParserService(ILogger<ValueParserService> logger)
         }
 
         //其余数据类型以double运算
-        var s = Convert.ToDouble(value) * ( tagInfo.Scaling ==null?(double)1: (double)tagInfo.Scaling ) + tagInfo.Shifting==null?0:tagInfo.Shifting;
+        var s = Convert.ToDouble(value) * ( tagInfo.Scaling ==null?(double)1: (double)tagInfo.Scaling ) +  ((double)(tagInfo.Shifting==null?0:tagInfo.Shifting));
 
         object result;
         try
         {
             //使用Convert来实现四舍五入和数据类型转换，以及抛出数据溢出异常
-            result = s is null?  null: Convert.ChangeType(s, destType);
+            result =  Convert.ChangeType(s, destType);
         }
         catch (OverflowException)
         {

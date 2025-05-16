@@ -98,7 +98,7 @@ public class OpcUaEdgeDriver(
 
                 foreach (var se in address)
                 {
-                    client.Monitoring(se, 500, async (_, e) =>
+                    client.Monitoring(se, 200, async (_, e) =>
                     {
                         var value = (MonitoredItemNotification)e.NotificationValue;
                         await RunConcurrentTagUpdateAsync(se, value.Value.ToString());

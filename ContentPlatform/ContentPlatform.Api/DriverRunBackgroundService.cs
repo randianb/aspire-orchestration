@@ -6,12 +6,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ContentPlatform.Api;
 
-public class DriverRunBackgroundService(IServiceScopeFactory scopeFactory): BackgroundService
+public class DriverRunBackgroundService(IServiceScopeFactory scopeFactory,ILogger<DriverRunBackgroundService> logger): BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using (var scope = scopeFactory.CreateScope())
         {
+            var iconfig = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var dbConnectionString = iconfig.GetConnectionString("contentplatform-db"); // 或者 _configuration["ConnectionStrings:Database"]
+            logger.LogInformation("链接字符串："+dbConnectionString);
             // Resolve the Scoped service from the scope's service provider
             var driverRepository = scope.ServiceProvider.GetRequiredService<IDriverRepository>();
             var edgeDriverResolver = scope.ServiceProvider.GetRequiredService<Constants.EdgeDriverResolver>();

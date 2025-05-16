@@ -25,4 +25,4 @@ public record ChannelTagDTO(
     string? Value
 );
 
-public record DKChannelTagChangedEvent(List<ChannelTagDTO> TagDtos);
+public record ChannelTagChangedEvent(List<ChannelTagDTO> TagDtos,String ChannelCode,List<String> SenderCodes);

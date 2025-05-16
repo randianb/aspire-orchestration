@@ -21,7 +21,10 @@
                 </div>
                 <div class="mb-3">
                     <label for="driverType" class="form-label">DriverType:</label>
-                    <InputNumber id="driverType" @bind-Value="newDriver.DriverType" class="form-control"/>
+                    <InputSelect id="driverType" @bind-Value="newDriver.DriverType" class="form-control">
+                        <option value="1">OPCUA</option>
+                        <option value="2">OPCDA</option>
+                    </InputSelect>
                 </div>
                 <div class="mb-3">
                     <label for="machineCode" class="form-label">MachineCode:</label>
@@ -37,8 +40,12 @@
                 </div>
                 <div class="mb-3">
                     <label for="hasIdentity" class="form-label">HasIdentity:</label>
-                    <InputCheckbox id="hasIdentity" @bind-Value="newDriver.HasIdentity" class="form-control"/>
+                    <InputSelect id="hasIdentity" @bind-Value="newDriver.HasIdentity" class="form-control">
+                        <option value="true">是</option>
+                        <option value="false">否</option>
+                    </InputSelect>
                 </div>
+                
                 <div class="mb-3">
                     <label for="userName" class="form-label">UserName:</label>
                     <InputText id="userName" @bind-Value="newDriver.UserName" class="form-control"/>

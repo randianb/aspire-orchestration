@@ -2,13 +2,13 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json.Linq;
 
 namespace ContentPlatform.Api.Entities;
 
 public class DriverEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string DriverCode { get; set; }
     public int DriverType { get; set; }
@@ -24,8 +24,7 @@ public class DriverEntity
 
 public class EquipEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string EquipCode { get; set; }
     public string EquipName { get; set; }
@@ -35,8 +34,7 @@ public class EquipEntity
 
 public class GroupEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string EquipCode { get; set; }
     public string GroupCode { get; set; }
@@ -46,8 +44,7 @@ public class GroupEntity
 
 public class TagEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string? GroupCode { get; set; }
     public string? DriverCode { get; set; }
@@ -95,7 +92,7 @@ public class TagEntity
     }
 
     [JsonIgnore] // Prevent EF Core from trying to map this property
-    public ObjValue? LastValue 
+    public ObjValue? LastValue
     {
         get
         {
@@ -122,8 +119,7 @@ public class TagEntity
 
 public class SchedulerConfigEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string Topic { get; set; }
     public string Body { get; set; }
@@ -135,21 +131,19 @@ public class SchedulerConfigEntity
 
 public class ChannelEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string ChannelCode { get; set; }
     public bool IsSchedule { get; set; }
     public string Topic { get; set; }
     public string Desc { get; set; }
-    public List<string> SenderCodes { get; set; }= new();
-    public List<string> TagCodes { get; set; }= new();
+    public List<string> SenderCodes { get; set; } = new();
+    public List<string> TagCodes { get; set; } = new();
 }
 
 public class MachineEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string MachineCode { get; set; }
     public string? Desc { get; set; }
@@ -157,10 +151,72 @@ public class MachineEntity
     public DateTime CreateTime { get; set; }
 }
 
+public class ChannelTagHistoryEntity
+{
+    [Key] public Guid Id { get; set; }
+
+    public string ChannelCode { get; set; }
+
+    [Column(TypeName = "jsonb")] // PostgreSQL specific, use "json" for MySQL/SQL Server
+    public string? BodyJson { get; set; }
+
+    public List<ChannelTagEntity> Body 
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(BodyJson))
+            {
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<List<ChannelTagEntity>>(BodyJson);
+        }
+        set
+        {
+            if (value == null)
+            {
+                BodyJson = null;
+            }
+            else
+            {
+                BodyJson = JsonSerializer.Serialize(value);
+            }
+        }
+    }
+
+    [Column(TypeName = "jsonb")] // PostgreSQL specific, use "json" for MySQL/SQL Server
+    public string? SimpleBodyJson { get; set; }
+
+    public Dictionary<string, string> SimpleBody
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(SimpleBodyJson))
+            {
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(SimpleBodyJson);
+        }
+        set
+        {
+            if (value == null)
+            {
+                SimpleBodyJson = null;
+            }
+            else
+            {
+                SimpleBodyJson = JsonSerializer.Serialize(value);
+            }
+        }
+    }
+
+    public DateTime CreateTime { get; set; }
+}
+
 public class ChannelTagEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string ChannelCode { get; set; }
 
@@ -180,7 +236,7 @@ public class ChannelTagEntity
     public string? LastValueJson { get; set; }
 
     [JsonIgnore] // Prevent EF Core from trying to map this property
-    public ObjValue? Value 
+    public ObjValue? Value
     {
         get
         {
@@ -232,14 +288,37 @@ public class ChannelTagEntity
 
 public class SenderEntity
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
 
     public string SenderCode { get; set; }
-    public string MachineCode { get; set; }
-    public string DriverCode { get; set; }
+    public string? MachineCode { get; set; }
+    public string? DriverCode { get; set; }
     public int SenderType { get; set; }
-    public string Desc { get; set; }
+    [Column(TypeName = "jsonb")] // PostgreSQL specific, use "json" for MySQL/SQL Server
+    public string? OptionsJson { get; set; }
+    public JObject? Options  {
+        get
+        {
+            if (string.IsNullOrEmpty(OptionsJson))
+            {
+                return null;
+            }
+
+            return JObject.Parse(OptionsJson);
+        }
+        set
+        {
+            if (value == null)
+            {
+                OptionsJson = null;
+            }
+            else
+            {
+                OptionsJson = JsonSerializer.Serialize(value);
+            }
+        }
+    }
+    public string? Desc { get; set; }
 }
 
 public record ObjValue

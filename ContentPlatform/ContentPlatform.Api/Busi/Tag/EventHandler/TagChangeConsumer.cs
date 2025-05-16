@@ -47,7 +47,7 @@ public class TagChangeConsumer(
                     .FirstOrDefaultAsync(x => x.ChannelCode == channelTagEntity.ChannelCode);
 
                 //实时发送全部
-                if (!channel.IsSchedule && channelTagEntity.ChannelCode.StartsWith("DK_ESN_"))
+                if (!channel.IsSchedule )
                 {
                     var channelTags = await channelTagRepository.GetQuery()
                         .Where(x => x.ChannelCode == channelTagEntity.ChannelCode).ToListAsync();
@@ -55,20 +55,19 @@ public class TagChangeConsumer(
                     foreach (var channelTag in channelTags)
                     {
                         var dto = new ChannelTagDTO(
-                            tag.GroupCode,
+                            channelTag.GroupCode,
                             channelTag.ChannelCode,
                             tag.DriverCode,
-                            tag.EquipCode,
-                            tag.TagCode,
-                            tag.DataType,
-                            tag.Desc,
-                            tag.Value == null ? "" : tag.Value.GetValue().ToString());
+                            channelTag.EquipCode,
+                            channelTag.TagCode,
+                            channelTag.DataType,
+                            channelTag.Desc,
+                            channelTag.Value == null ? "" : channelTag.Value.GetValue().ToString());
 
                         tags.Add(dto);
                     }
-
                     await _publishEndpoint.Publish(
-                        new DKChannelTagChangedEvent(tags));
+                        new ChannelTagChangedEvent(tags,channel.ChannelCode,channel.SenderCodes));
                 }
             }
         }

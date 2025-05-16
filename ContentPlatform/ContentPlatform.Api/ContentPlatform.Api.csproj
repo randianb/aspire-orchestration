@@ -27,11 +27,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
     <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.NewtonsoftJson" Version="2.2.0" />
 
-    <PackageReference Include="Tipa.Commons" Version="1.0.0"/>
-    <PackageReference Include="Tipa.EFCoreExtend" Version="1.0.0"/>
-    <PackageReference Include="Tipa.FunctionQuery" Version="1.0.0"/>
-    <PackageReference Include="Tipa.JsonExtern" Version="1.0.0"/>
-    <PackageReference Include="Tipa.ReflectionHelper" Version="1.0.0"/>
+    <PackageReference Include="Tipa.Commons" Version="1.0.0" />
+    <PackageReference Include="Tipa.EFCoreExtend" Version="1.0.0" />
+    <PackageReference Include="Tipa.FunctionQuery" Version="1.0.0" />
+    <PackageReference Include="Tipa.JsonExtern" Version="1.0.0" />
+    <PackageReference Include="Tipa.ReflectionHelper" Version="1.0.0" />
     <PackageReference Include="AutoMapper" Version="13.0.1" />
 
     <PackageReference Include="OPCUaClient" Version="1.7.0.0" />
@@ -53,6 +53,18 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Schema\" />
+  </ItemGroup>
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="app\publish\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config" />
+    <_ContentIncludedByDefault Remove="app\publish\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll.config" />
+    <_ContentIncludedByDefault Remove="app\publish\web.config" />
+    <_ContentIncludedByDefault Remove="app\publish\appsettings.Development.json" />
+    <_ContentIncludedByDefault Remove="app\publish\appsettings.json" />
+    <_ContentIncludedByDefault Remove="app\publish\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.deps.json" />
+    <_ContentIncludedByDefault Remove="app\publish\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="app\publish\ContentPlatform.Api.deps.json" />
+    <_ContentIncludedByDefault Remove="app\publish\ContentPlatform.Api.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="app\publish\ContentPlatform.Api.staticwebassets.endpoints.json" />
   </ItemGroup>
 
 </Project>
