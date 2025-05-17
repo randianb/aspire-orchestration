@@ -285,7 +285,19 @@ public class ChannelTagEntity
         }
     }
 }
-
+public class RequestResponseLogEntity
+{
+    public Guid Id { get; set; }
+    public DateTime? Timestamp { get; set; }
+    public string RequestUri { get; set; }
+    public string RequestMethod { get; set; }
+    public string RequestBody { get; set; }
+    public int? ResponseStatusCode { get; set; }
+    public string? ResponseBody { get; set; }
+    public bool? IsError { get; set; }
+    public string? ErrorMessage { get; set; }
+    // 可以根據需要添加更多欄位，例如請求頭、響應頭等
+}
 public class SenderEntity
 {
     [Key] public Guid Id { get; set; }

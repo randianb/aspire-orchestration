@@ -2,6 +2,7 @@
 using ContentPlatform.Api.Entities;
 using ContentPlatform.Api.Repository.Channel;
 using ContentPlatform.Api.Repository.Sender;
+using ContentPlatform.Api.Repository.Tag;
 using Contracts;
 using Mapster;
 using MassTransit;
@@ -9,16 +10,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Hybrid;
 using Newtonsoft.Json;
+using Tipa.JsonExtern;
 
 namespace ContentPlatform.Api.Busi.Sender.EventHandler;
 
 public class DkSenderConsumer(
     ILogger<DkSenderConsumer> logger,
     IHttpClientFactory httpClientFactory,
-    HybridCache hybridCache,
     IChannelRepository channelRepository,
     IDistributedCache _distributedCache,
     ISenderRepository senderRepository,
+    IRequestResponseLogRepository requestResponseLogRepository,
     IChannelTagHistoryRepository channelTagHistoryRepository) : IConsumer<DkSenderInvokeEvent>
 {
     public async Task Consume(ConsumeContext<DkSenderInvokeEvent> context)
@@ -43,14 +45,14 @@ public class DkSenderConsumer(
             logger.LogInformation("配置不满足条件！");
             return;
         }
-       
+
         var esnTagCode = sender.Options.GetValue("ESN").ToString();
         var controlTagCode = sender.Options.GetValue("Control").ToString();
         var esnTag = context.Message.TagDtos.FirstOrDefault(x => x.TagCode == esnTagCode);
-    
-        //如果条码为空就不记录
-        var (curControlTag, hisControlTag) = 
-            await rememberControlHis(context, controlTagCode,esnTag);
+
+        //如果条码为空就不记录,把当前的Tag 的Desc 设置 ESN的值
+        var (curControlTag, hisControlTag) =
+            await getControlHis(context, controlTagCode, esnTag);
 
         if (curControlTag == null)
         {
@@ -61,16 +63,17 @@ public class DkSenderConsumer(
         bool inbound = false;
         bool outbound = false;
 
-        
-        saveHistory(curControlTag, esnTag);
 
-        if ((hisControlTag==null ||hisControlTag.Value == null) && (curControlTag.Value == "1" || curControlTag.Value == "17") &&
+        await saveHistory(curControlTag, esnTag);
+        
+        if ((hisControlTag == null || hisControlTag.Value == null) &&
+            (curControlTag.Value == "1" || curControlTag.Value == "17") &&
             esnTag.Value != null)
         {
             //可以入站
             inbound = true;
         }
-        else if (hisControlTag.Value != null)
+        else if (hisControlTag!=null&&hisControlTag.Value != null)
         {
             if (hisControlTag.Value == "0")
             {
@@ -87,12 +90,12 @@ public class DkSenderConsumer(
             else if (curControlTag.Value == "0")
             {
                 if ((hisControlTag.Value == "49" || hisControlTag.Value == "53") &&
-                    (esnTag.Value != null && !esnTag.Value.Contains("null")))
+                    (hisControlTag.Desc != null && !hisControlTag.Desc.Contains("null")))
                 {
                     outbound = true;
                 }
             }
-            else if (hisControlTag.Value == "55")
+            else if (curControlTag.Value == "55")
             {
                 return;
             }
@@ -102,61 +105,191 @@ public class DkSenderConsumer(
         logger.LogInformation(
             $"DKESNConsumer consumed message: \r\n {JsonConvert.SerializeObject(context.Message.TagDtos)}");
 
+        await saveMemo(context, controlTagCode, curControlTag, esnTag,hisControlTag);
 
-        
-         if (inbound)
+        if (!inbound && !outbound)
         {
-            //入站
-            await httpClient.PostAsJsonAsync("/adne/scanCage/inbound",
-                new PostRequest(esnTag.Value, curControlTag.GroupCode));
-        }
-        else if (outbound)
-        {
-            //出站
-            await httpClient.PostAsJsonAsync("/adne/scanCage/outbound",
-                new PostRequest(esnTag.Value, curControlTag.GroupCode));
+            return;
         }
 
-       
-    }
-
-    private void saveHistory(ChannelTagDTO curControlTag, ChannelTagDTO? esnTag)
-    {
-        var chanelTags = new List<ChannelTagEntity>();
-
-        TypeAdapterConfig<ChannelTagDTO, ChannelTagEntity>.NewConfig()
-            .Ignore(dest => dest.Value);
-
-        var curChannelTag = curControlTag.Adapt<ChannelTagEntity>();
-        var esnChannelTag = esnTag.Adapt<ChannelTagEntity>();
-        curChannelTag.Value = new ObjValue() { Str = curControlTag.Value };
-        esnChannelTag.Value = new ObjValue() { Str = esnTag.Value };
-
-        chanelTags.Add(curChannelTag);
-        chanelTags.Add(esnChannelTag);
-        channelTagHistoryRepository.CreateAsync(new ChannelTagHistoryEntity()
+        try
         {
-            ChannelCode = curControlTag.ChannelCode,
-            Body = chanelTags,
-            SimpleBody = new Dictionary<string, string>()
+            string requestUri = "";
+            if (inbound) requestUri = "/adne/scanCage/inbound";
+            if (outbound) requestUri = "/adne/scanCage/outbound";
+            HttpResponseMessage response = null;
+            var requestBody = new PostRequest(esnTag.Value, curControlTag.GroupCode);
+            string requestMethod = HttpMethod.Post.Method;
+            string responseBody = null;
+            try
             {
-                { curControlTag.TagCode, curControlTag.Value },
-                { esnTag.TagCode, esnTag.Value },
-            },
-            CreateTime = DateTime.UtcNow
-        });
-        channelTagHistoryRepository.SaveChangesAsync();
+                if (inbound)
+                {
+                    requestBody = new PostRequest(esnTag.Value, curControlTag.GroupCode);
+                    response = await httpClient.PostAsJsonAsync(requestUri,
+                        requestBody );
+                }
+                else if (outbound)
+                {
+                    requestBody = new PostRequest(hisControlTag.Desc, curControlTag.GroupCode);
+                    response = await httpClient.PostAsJsonAsync(requestUri,
+                        requestBody);
+                }
+               
+
+                if (response != null)
+                {
+                    response.EnsureSuccessStatusCode(); // 拋出異常如果狀態碼不是成功的範圍
+                    responseBody = await response.Content.ReadAsStringAsync();
+                }
+
+                await requestResponseLogRepository.CreateAsync(new RequestResponseLogEntity
+                {
+                    Timestamp = DateTime.UtcNow,
+                    RequestUri = requestUri,
+                    RequestMethod = requestMethod,
+                    RequestBody = JsonConvert.SerializeObject(requestBody),
+                    ResponseStatusCode = (int?)response?.StatusCode,
+                    ResponseBody = responseBody,
+                    IsError = false,
+                    ErrorMessage = null
+                });
+                await requestResponseLogRepository.SaveChangesAsync();
+            }
+            catch (HttpRequestException ex)
+            {
+                await requestResponseLogRepository.CreateAsync(new RequestResponseLogEntity
+                {
+                    Timestamp = DateTime.UtcNow,
+                    RequestUri = requestUri,
+                    RequestMethod = requestMethod,
+                    RequestBody = JsonConvert.SerializeObject(requestBody),
+                    ResponseStatusCode = (int?)response?.StatusCode,
+                    ResponseBody = responseBody,
+                    IsError = true,
+                    ErrorMessage = ex.Message
+                });
+                await requestResponseLogRepository.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "DKESNConsumer error");
+                await requestResponseLogRepository.CreateAsync(new RequestResponseLogEntity
+                {
+                    Timestamp = DateTime.UtcNow,
+                    RequestUri = requestUri,
+                    RequestMethod = requestMethod,
+                    RequestBody = JsonConvert.SerializeObject(requestBody),
+                    ResponseStatusCode = (int?)response?.StatusCode,
+                    ResponseBody = responseBody,
+                    IsError = true,
+                    ErrorMessage = ex.Message
+                });
+                await requestResponseLogRepository.SaveChangesAsync();
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, e.Message);
+        }
+        
+        
     }
 
-    private async Task<(ChannelTagDTO? curControlTag, ChannelTagDTO? hisControlTag)> rememberControlHis(ConsumeContext<DkSenderInvokeEvent> context, string controlTagCode,ChannelTagDTO esnTag)
+    private async Task saveMemo(ConsumeContext<DkSenderInvokeEvent> context, string controlTagCode, ChannelTagDTO curControlTag,
+        ChannelTagDTO esnTag,ChannelTagDTO hisTag)
+    {
+        // 确保 key 是唯一的且稳定
+        var cacheKey = context.Message.ChannelCode + "-dk-" +
+                       controlTagCode; // IDistributedCache 使用 byte[] 作为 key
+        // 序列化当前值
+        try
+        {
+            
+            // 3. **记录/存储** 当前的值供下次使用 (使用 IDistributedCache)
+            if (curControlTag != null)
+            {
+                //如果是空条码
+                if (curControlTag.Value != "0" && (null == esnTag.Value || esnTag.Value.Contains("null")))
+                {
+                    return;
+                }
+                else if (curControlTag.Value == "55")
+                {
+                    //不缓存55
+                    return;
+                } else if (curControlTag.Value == "53"&& (null == esnTag.Value || esnTag.Value.Contains("null")))
+                {
+                    //不缓存53 条码为空的
+                    return;
+                }
+            }
+            curControlTag = curControlTag with { Desc = ((null == esnTag.Value || esnTag.Value.Contains("null")?hisTag.Desc: esnTag.Value)) };
+            string currentJson = JsonConvert.SerializeObject(curControlTag);
+            byte[] currentBytes = Encoding.UTF8.GetBytes(currentJson);
+
+            // 设置缓存选项（过期时间等）
+            var cacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(10) // 例如，缓存 10 分钟
+            };
+
+            // 存储到分布式缓存
+            await _distributedCache.SetAsync(cacheKey, currentBytes, cacheOptions, context.CancellationToken);
+            Console.WriteLine($"当前 {controlTagCode} 的值已记录到分布式缓存。");
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine(
+                $"Error serializing current data for key {cacheKey}: {ex.Message}");
+            // 处理序列化错误，可能无法缓存当前值
+        }
+    }
+
+    private async Task saveHistory(ChannelTagDTO curControlTag, ChannelTagDTO? esnTag)
+    {
+        try
+        {
+            var chanelTags = new List<ChannelTagEntity>();
+
+
+            var curChannelTag = curControlTag.Adapt<ChannelTagEntity>();
+            var esnChannelTag = esnTag.Adapt<ChannelTagEntity>();
+            curChannelTag.Value = new ObjValue() { Str = curControlTag.Value };
+            esnChannelTag.Value = new ObjValue() { Str = esnTag.Value };
+
+            chanelTags.Add(curChannelTag);
+            chanelTags.Add(esnChannelTag);
+            await channelTagHistoryRepository.CreateAsync(new ChannelTagHistoryEntity()
+            {
+                ChannelCode = curControlTag.ChannelCode,
+                Body = chanelTags,
+                SimpleBody = new Dictionary<string, string>()
+                {
+                    { curControlTag.TagCode, curControlTag.Value },
+                    { esnTag.TagCode, esnTag.Value },
+                },
+                CreateTime = DateTime.UtcNow
+            });
+            await channelTagHistoryRepository.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, e.Message);
+        }
+            
+    }
+
+    private async  Task<(ChannelTagDTO? curControlTag, ChannelTagDTO? hisControlTag)> getControlHis(
+        ConsumeContext<DkSenderInvokeEvent> context, string controlTagCode, ChannelTagDTO esnTag)
     {
         //记录上一次值
 
         var curControlTag = context.Message.TagDtos.FirstOrDefault(x => x.TagCode == controlTagCode);
 
         // 确保 key 是唯一的且稳定
-        var cacheKey =context.Message.ChannelCode + "-dk-" +
-                      controlTagCode; // IDistributedCache 使用 byte[] 作为 key
+        var cacheKey = context.Message.ChannelCode + "-dk-" +
+                       controlTagCode; // IDistributedCache 使用 byte[] 作为 key
 
         ChannelTagDTO hisControlTag = null;
 
@@ -184,68 +317,7 @@ public class DkSenderConsumer(
             }
         }
 
-        // --- 在这里处理你的业务逻辑 ---
-        // 现在你可以使用 hisControlTag (上次的值，可能为 null) 和 curControlTag (当前的值，可能为 null)
-        // ... 你的比较和逻辑判断 ...
-        if (hisControlTag != null)
-        {
-            Console.WriteLine($"上次 {controlTagCode} 的值: {hisControlTag.Value}");
-            // ... 你的逻辑 ...
-        }
-        else
-        {
-            Console.WriteLine($"没有找到 {controlTagCode} 的上次记录值。");
-        }
 
-        if (curControlTag != null)
-        {
-            Console.WriteLine($"当前 {controlTagCode} 的值: {curControlTag.Value}");
-            // ... 你的逻辑 ...
-        }
-        // --- 业务逻辑处理结束 ---
-
-
-        // 3. **记录/存储** 当前的值供下次使用 (使用 IDistributedCache)
-        if (curControlTag != null)
-        {
-            //如果是空条码
-            if ( curControlTag.Value!="0" && null ==esnTag.Value ||esnTag.Value.Contains("null"))
-            {
-                return (curControlTag, hisControlTag);
-            }
-            else  if (hisControlTag.Value == "55")
-            {
-                //不缓存55
-                return (curControlTag, hisControlTag);
-            }
-            // 序列化当前值
-            try
-            {
-                string currentJson = JsonConvert.SerializeObject(curControlTag);
-                byte[] currentBytes = Encoding.UTF8.GetBytes(currentJson);
-
-                // 设置缓存选项（过期时间等）
-                var cacheOptions = new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) // 例如，缓存 10 分钟
-                };
-
-                // 存储到分布式缓存
-                await _distributedCache.SetAsync(cacheKey, currentBytes, cacheOptions, context.CancellationToken);
-                Console.WriteLine($"当前 {controlTagCode} 的值已记录到分布式缓存。");
-            }
-            catch (JsonException ex)
-            {
-                Console.WriteLine(
-                    $"Error serializing current data for key {cacheKey}: {ex.Message}");
-                // 处理序列化错误，可能无法缓存当前值
-            }
-        }
-        else
-        {
-            // 如果当前 TagDto 不存在，你可能想从缓存中移除上次的值
-            // await _distributedCache.RemoveAsync(cacheKey, context.CancellationToken);
-        }
 
         // ... 后续处理 ...
         return (curControlTag, hisControlTag);

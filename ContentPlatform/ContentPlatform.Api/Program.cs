@@ -7,12 +7,16 @@ using ContentPlatform.Api.Busi.Logic;
 using ContentPlatform.Api.Busi.Logic.Common;
 using ContentPlatform.Api.Busi.Logic.EdgeDriver;
 using ContentPlatform.Api.Busi.Logic.Enums;
+using ContentPlatform.Api.Busi.Sender.Api;
 using ContentPlatform.Api.Busi.Sender.EventHandler;
 using ContentPlatform.Api.Busi.Tag.EventHandler;
 using ContentPlatform.Api.Database;
+using ContentPlatform.Api.Entities;
 using ContentPlatform.Api.Extensions;
 using ContentPlatform.Api.Repository;
+using Contracts;
 using FluentValidation;
+using Mapster;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
@@ -33,7 +37,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(o =>
     o.UseNpgsql(builder.Configuration.GetConnectionString("contentplatform-db")));
 
 var assembly = typeof(Program).Assembly;
-
+TypeAdapterConfig<CreateSender.Command, SenderEntity>.NewConfig()
+    .Ignore(dest => dest.Options);
+TypeAdapterConfig<ChannelTagDTO, ChannelTagEntity>.NewConfig()
+    .Ignore(dest => dest.Value);
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 
 builder.Services.AddCarter();

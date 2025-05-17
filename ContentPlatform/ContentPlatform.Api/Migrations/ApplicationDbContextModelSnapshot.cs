@@ -297,6 +297,47 @@ namespace ContentPlatform.Api.Migrations
                     b.ToTable("MachineEntity", "content");
                 });
 
+            modelBuilder.Entity("ContentPlatform.Api.Entities.RequestResponseLogEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<bool?>("IsError")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("RequestBody")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestUri")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResponseBody")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ResponseStatusCode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.ToTable("RequestResponseLogEntity", "content");
+                });
+
             modelBuilder.Entity("ContentPlatform.Api.Entities.SenderEntity", b =>
                 {
                     b.Property<Guid>("Id")

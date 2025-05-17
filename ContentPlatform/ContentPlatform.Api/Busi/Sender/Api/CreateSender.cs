@@ -74,8 +74,7 @@ public static class CreateSender
             {
                 Id = Guid.NewGuid(),
             };
-            TypeAdapterConfig<Command, SenderEntity>.NewConfig()
-                .Ignore(dest => dest.Options);
+
 
             sender = request.Adapt<SenderEntity>();
             sender.OptionsJson=JsonConvert.SerializeObject(request.Options);
