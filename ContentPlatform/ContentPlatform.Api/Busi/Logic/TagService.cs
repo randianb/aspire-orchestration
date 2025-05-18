@@ -21,7 +21,7 @@ public class TagService(ITagRepository iTagRepository,ISender sender, ValueParse
             if (tag != null)
             {
                 valueParserService.ConvertType(value, tag);
-                var command = tag.Adapt<UpdateTag.Command>();
+                var command = tag.Adapt<UpdateTagValue.Command>();
                 var result = await sender.Send(command);
             }
             else

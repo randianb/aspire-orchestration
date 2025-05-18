@@ -2,5 +2,5 @@
 
 public interface IEdgeDriverFactory
 {
-    Dictionary<string,IEdgeDriver> GetDrivers();
+    public abstract ObservableDictionary<string, IEdgeDriver> GetDrivers();
 }

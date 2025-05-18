@@ -9,6 +9,14 @@ string DataType,
 string? Desc,
 string? Value
 );
+
+public record TagValueUpdatedEvent(
+    string TagCode,
+    string? LastUpdateValue,
+    DateTime? LastUpdateTime,
+    string? Value,
+    DateTime? UpdateTime
+);
 public record TagUpdatedEvent(Guid Id,
     string? GroupCode,
     string? DriverCode,

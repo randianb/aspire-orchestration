@@ -27,7 +27,7 @@ public sealed class DriverCreatedConsumer : IConsumer<DriverCreatedEvent>
        //创建一个驱动运行即可，附带绑定的tag
        DriverEntity driver =context.Message.Adapt<DriverEntity>();
        var edgeDriver = edgeDriverResolver((DriverTypeEnum)driver.DriverType);
+       edgeDriverFactory.GetDrivers().Add(driver.DriverCode, edgeDriver);
        edgeDriver.Run(driver);
-       edgeDriverFactory.GetDrivers().TryAdd(driver.DriverCode, edgeDriver);
     }
 }

@@ -10,13 +10,14 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    // {
-    //     var connectionString = "Host=192.168.114.101;Port=5432;Database=gateway1;Username=postgres;Password=FRYeP]0Ql:$g1+n7;Include Error Detail=true";
-    //     var dbContextOptionsBuilder = optionsBuilder.UseNpgsql(
-    //         connectionString
-    //     );
-    // }
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.EnableSensitiveDataLogging(true);
+        // var connectionString = "Host=192.168.114.101;Port=5432;Database=gateway1;Username=postgres;Password=FRYeP]0Ql:$g1+n7;Include Error Detail=true";
+        // var dbContextOptionsBuilder = optionsBuilder.UseNpgsql(
+        //     connectionString
+        // );
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

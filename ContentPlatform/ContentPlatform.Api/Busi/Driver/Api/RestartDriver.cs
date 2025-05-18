@@ -54,9 +54,9 @@ public static class RestartDriver
                     "The driver with the specified ID was not found"));
             } 
             var edgeDriver = edgeDriverResolver((DriverTypeEnum)driver.DriverType);
+            edgeDriverFactory.GetDrivers().Add(driver.DriverCode,edgeDriver);
             edgeDriver.Stop();
             edgeDriver.Run(driver);
-            edgeDriverFactory.GetDrivers().TryAdd(driver.DriverCode,edgeDriver);
             await _publishEndpoint.Publish(
                 new DriverRestartedEvent(driver.Id,DateTime.UtcNow),
                 cancellationToken);

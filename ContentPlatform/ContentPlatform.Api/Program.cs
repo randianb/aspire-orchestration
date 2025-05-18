@@ -55,10 +55,21 @@ builder.Services.AddHttpClient();
 //     string dk = builder.Configuration.GetSection("Dk:Url").Value;
 //     client.BaseAddress = new Uri(dk);
 // });
+
+builder.AddRedisDistributedCache("contentplatform-cache");
+var entryOptions = new FusionCacheEntryOptions().SetDuration(TimeSpan.FromMinutes(10));
+builder.Services.AddFusionCache()
+    .WithDefaultEntryOptions(entryOptions)
+    .WithPostSetup((sp, c) => { c.DefaultEntryOptions.Duration = TimeSpan.FromMinutes(5); })
+    .AsHybridCache().WithRegisteredDistributedCache().WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
+
+
+
 builder.Services.AddScoped<ValueParserService>();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<OpcUaEdgeDriver>();
 builder.Services.AddScoped<OpcDaEdgeDriver>();
+builder.Services.AddSingleton<ObservableDictionary<string, IEdgeDriver>>();
 builder.Services.AddSingleton<IEdgeDriverFactory, EdgeDriverFactory>();
 
 builder.Services.AddTransient<Constants.EdgeDriverResolver>(serviceProvider => type =>
@@ -109,13 +120,6 @@ builder.Services.AddMassTransit(busConfigurator =>
         configurator.ConfigureEndpoints(context);
     });
 });
-
-builder.AddRedisDistributedCache("contentplatform-cache");
-var entryOptions = new FusionCacheEntryOptions().SetDuration(TimeSpan.FromMinutes(10));
-builder.Services.AddFusionCache()
-    .WithDefaultEntryOptions(entryOptions)
-    .WithPostSetup((sp, c) => { c.DefaultEntryOptions.Duration = TimeSpan.FromMinutes(5); })
-    .AsHybridCache().WithRegisteredDistributedCache().WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
 
 builder.Services.AddHostedService<DriverRunBackgroundService>();
 var app = builder.Build();

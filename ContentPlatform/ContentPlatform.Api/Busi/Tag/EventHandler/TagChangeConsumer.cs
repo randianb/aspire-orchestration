@@ -14,22 +14,28 @@ public class TagChangeConsumer(
     ITagRepository tagRepository,
     IPublishEndpoint _publishEndpoint) :
     IConsumer<TagCreatedEvent>,
+    IConsumer<TagValueUpdatedEvent>,
     IConsumer<TagUpdatedEvent>
 {
     public async Task Consume(ConsumeContext<TagCreatedEvent> context)
     {
-        TagEntity tag = context.Message.Adapt<TagEntity>();
+        await ChannelReadCommon(context);
+    }
+
+    private async Task ChannelReadCommon(ConsumeContext<TagCreatedEvent> context)
+    {
+        var tag =  await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
         await ChannelRead(tag);
     }
 
+    public async Task Consume(ConsumeContext<TagValueUpdatedEvent> context)
+    {
+        var tag =  await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
+        await ChannelRead(tag);
+    }
     public async Task Consume(ConsumeContext<TagUpdatedEvent> context)
     {
-        TagEntity tag = new TagEntity();
-        tag.Id = context.Message.Id;
-        tag.TagCode = context.Message.TagCode;
-        tag.DriverCode = context.Message.DriverCode;
-        tag.DataType = context.Message.DataType;
-        tag.Value = new ObjValue() { Str = context.Message.Value };
+        var tag =  await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
         await ChannelRead(tag);
     }
 
@@ -41,7 +47,9 @@ public class TagChangeConsumer(
             foreach (var channelTagEntity in channels)
             {
                 channelTagEntity.Value = tag.Value;
+                channelTagEntity.UpdateTime =tag.UpdateTime;
                 channelTagEntity.LastValue = tag.LastValue;
+                channelTagEntity.LastUpdateTime = tag.LastUpdateTime;
                 await channelTagRepository.SaveChangesAsync();
                 var channel = await channelRepository.GetQuery(true)
                     .FirstOrDefaultAsync(x => x.ChannelCode == channelTagEntity.ChannelCode);
@@ -72,4 +80,6 @@ public class TagChangeConsumer(
             }
         }
     }
+
+ 
 }

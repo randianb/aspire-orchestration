@@ -25,7 +25,7 @@ public class DriverRunBackgroundService(IServiceScopeFactory scopeFactory,ILogge
             {
                 var edgeDriver = edgeDriverResolver((DriverTypeEnum)driver.DriverType);
                 edgeDriver.Run(driver);
-                edgeDriverFactory.GetDrivers().TryAdd(driver.DriverCode, edgeDriver);
+                edgeDriverFactory.GetDrivers().Add(driver.DriverCode, edgeDriver);
             }
         }
     }
