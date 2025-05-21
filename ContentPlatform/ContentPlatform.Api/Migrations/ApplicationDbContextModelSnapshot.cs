@@ -67,6 +67,9 @@ namespace ContentPlatform.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool?>("IsFull")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsSchedule")
                         .HasColumnType("boolean");
 
@@ -108,6 +111,9 @@ namespace ContentPlatform.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Desc")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DriverCode")
                         .HasColumnType("text");
 
                     b.Property<string>("EquipCode")

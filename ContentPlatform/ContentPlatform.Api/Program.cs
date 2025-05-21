@@ -106,6 +106,7 @@ builder.Services.AddMassTransit(busConfigurator =>
     busConfigurator.AddConsumer<SenderUpdatedConsumer>();
     busConfigurator.AddConsumer<SenderDeletedConsumer>();
     busConfigurator.AddConsumer<DkSenderConsumer>();
+    busConfigurator.AddConsumer<Influxdb2SenderConsumer>();
 
 
     busConfigurator.AddConsumer<ChannelCreatedConsumer>();

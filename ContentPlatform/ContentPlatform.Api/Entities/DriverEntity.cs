@@ -135,6 +135,7 @@ public class ChannelEntity
 
     public string ChannelCode { get; set; }
     public bool IsSchedule { get; set; }
+    public bool? IsFull { get; set; }
     public string Topic { get; set; }
     public string Desc { get; set; }
     public List<string> SenderCodes { get; set; } = new();
@@ -223,6 +224,7 @@ public class ChannelTagEntity
     public string? GroupCode { get; set; }
     public string? EquipCode { get; set; }
     public string TagCode { get; set; }
+    public string? DriverCode { get; set; }
     public string DataType { get; set; }
     public string? Desc { get; set; }
     public DateTime? LastUpdateTime { get; set; }

@@ -1,4 +1,5 @@
-﻿using ContentPlatform.Api.Entities;
+﻿using ContentPlatform.Api.DataMap;
+using ContentPlatform.Api.Entities;
 using ContentPlatform.Api.Repository.Channel;
 using ContentPlatform.Api.Repository.Tag;
 using Contracts;
@@ -24,18 +25,19 @@ public class TagChangeConsumer(
 
     private async Task ChannelReadCommon(ConsumeContext<TagCreatedEvent> context)
     {
-        var tag =  await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
+        var tag = await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
         await ChannelRead(tag);
     }
 
     public async Task Consume(ConsumeContext<TagValueUpdatedEvent> context)
     {
-        var tag =  await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
+        var tag = await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
         await ChannelRead(tag);
     }
+
     public async Task Consume(ConsumeContext<TagUpdatedEvent> context)
     {
-        var tag =  await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
+        var tag = await tagRepository.GetQuery().FirstOrDefaultAsync(x => x.TagCode == context.Message.TagCode);
         await ChannelRead(tag);
     }
 
@@ -47,7 +49,7 @@ public class TagChangeConsumer(
             foreach (var channelTagEntity in channels)
             {
                 channelTagEntity.Value = tag.Value;
-                channelTagEntity.UpdateTime =tag.UpdateTime;
+                channelTagEntity.UpdateTime = tag.UpdateTime;
                 channelTagEntity.LastValue = tag.LastValue;
                 channelTagEntity.LastUpdateTime = tag.LastUpdateTime;
                 await channelTagRepository.SaveChangesAsync();
@@ -55,31 +57,16 @@ public class TagChangeConsumer(
                     .FirstOrDefaultAsync(x => x.ChannelCode == channelTagEntity.ChannelCode);
 
                 //实时发送全部
-                if (!channel.IsSchedule )
+                if (!channel.IsSchedule)
                 {
                     var channelTags = await channelTagRepository.GetQuery()
-                        .Where(x => x.ChannelCode == channelTagEntity.ChannelCode).ToListAsync();
-                    var tags = new List<ChannelTagDTO>();
-                    foreach (var channelTag in channelTags)
-                    {
-                        var dto = new ChannelTagDTO(
-                            channelTag.GroupCode,
-                            channelTag.ChannelCode,
-                            tag.DriverCode,
-                            channelTag.EquipCode,
-                            channelTag.TagCode,
-                            channelTag.DataType,
-                            channelTag.Desc,
-                            channelTag.Value == null ? "" : channelTag.Value.GetValue().ToString());
-
-                        tags.Add(dto);
-                    }
+                        .Where(x => x.ChannelCode == channelTagEntity.ChannelCode && x.TagCode == tag.TagCode)
+                        .ToListAsync();
+                    var tags = ChannelTagMap.ChannelTagDtos(channelTags);
                     await _publishEndpoint.Publish(
-                        new ChannelTagChangedEvent(tags,channel.ChannelCode,channel.SenderCodes));
+                        new ChannelTagChangedEvent(tags, channel.ChannelCode, channel.SenderCodes));
                 }
             }
         }
     }
-
- 
 }
