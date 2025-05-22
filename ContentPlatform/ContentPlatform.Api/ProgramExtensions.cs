@@ -1,5 +1,6 @@
 ﻿using AutoMapper.Internal;
 using ContentPlatform.Api.Repository;
+using MassTransit;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ContentPlatform.Api;
