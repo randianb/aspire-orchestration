@@ -55,6 +55,7 @@ public static class GetTags
                         DataType = tag.DataType,
                         Desc = tag.Desc,
                         Value = tag.Value==null?null:tag.Value.GetValue().ToString(),
+                        UpdateTime=tag.UpdateTime
                     })
                     .ToListAsync();
             }, cancellationToken: cancellationToken);

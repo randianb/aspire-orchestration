@@ -10,6 +10,7 @@ using ContentPlatform.Api.Busi.Logic.Enums;
 using ContentPlatform.Api.Busi.Sender.Api;
 using ContentPlatform.Api.Busi.Sender.EventHandler;
 using ContentPlatform.Api.Busi.Tag.EventHandler;
+using ContentPlatform.Api.Busi.Tag.Hubs;
 using ContentPlatform.Api.Database;
 using ContentPlatform.Api.Entities;
 using ContentPlatform.Api.Extensions;
@@ -65,6 +66,7 @@ builder.Services.AddFusionCache()
 
 
 
+builder.Services.AddSignalR();
 builder.Services.AddScoped<ValueParserService>();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<OpcUaEdgeDriver>();
@@ -139,5 +141,5 @@ if (app.Environment.IsDevelopment())
 app.MapCarter();
 
 app.UseHttpsRedirection();
-
+app.MapHub<TagNotificationHub>("api/tagHub");
 app.Run();

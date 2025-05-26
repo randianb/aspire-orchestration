@@ -1,10 +1,12 @@
-﻿using ContentPlatform.Api.DataMap;
+﻿using ContentPlatform.Api.Busi.Tag.Hubs;
+using ContentPlatform.Api.DataMap;
 using ContentPlatform.Api.Entities;
 using ContentPlatform.Api.Repository.Channel;
 using ContentPlatform.Api.Repository.Tag;
 using Contracts;
 using Mapster;
 using MassTransit;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ContentPlatform.Api.Busi.Tag.EventHandler;
@@ -13,6 +15,7 @@ public class TagChangeConsumer(
     IChannelRepository channelRepository,
     IChannelTagRepository channelTagRepository,
     ITagRepository tagRepository,
+    IHubContext<TagNotificationHub,ITagNotificationClient> hubContext,
     IPublishEndpoint _publishEndpoint) :
     IConsumer<TagCreatedEvent>,
     IConsumer<TagValueUpdatedEvent>,
@@ -43,6 +46,7 @@ public class TagChangeConsumer(
 
     public async Task ChannelRead(TagEntity tag)
     {
+        await hubContext.Clients.All.SendTagValueUpdate(tag);
         var channels = await channelTagRepository.GetQuery(true).Where(x => x.TagCode == tag.TagCode).ToListAsync();
         if (channels is not null)
         {

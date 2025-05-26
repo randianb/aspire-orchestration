@@ -1,7 +1,9 @@
 ﻿@page "/Tag"
 @inject IHttpClientFactory HttpClientFactory
-@using System.Text.Json
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
 @using System.Text.Json.Serialization
+@using Newtonsoft.Json.Linq
 
 <PageTitle>Tag</PageTitle>
 
@@ -83,6 +85,7 @@
                                 <p class="mb-1">@driver.DataType </p>
                                 <p class="mb-1">@driver.Desc </p>
                                 <p class="mb-2">@driver.Value </p>
+                                <p class="mb-2">@driver.UpdateTime</p>
                             </div>
                             <button @onclick="() => DeleteTag(driver.Id)" class="btn btn-link text-danger">
                                 <i class="fas fa-trash"></i>
@@ -107,12 +110,36 @@
     private string tagsInput = "";
     private List<TagResponse> tags;
     private HttpClient httpClient;
+    private  HubConnection hubConnection;
 
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
     {
-        httpClient = HttpClientFactory.CreateClient("ContentPlatform.Api");
-    }
+        try
+        {
+            httpClient = HttpClientFactory.CreateClient("ContentPlatform.Api");
+             hubConnection = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri(httpClient.BaseAddress.AbsoluteUri+"api/taghub"))
+                .Build();
 
+            hubConnection.On<string>("SendTagValueUpdate", async ( message) =>
+            {
+                await LoadTags();
+                await InvokeAsync(StateHasChanged);
+            });
+
+            await hubConnection.StartAsync();
+        }
+        catch (Exception e)
+        {
+            throw; // TODO 处理异常
+        }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
     protected override async Task OnInitializedAsync()
     {
         await LoadTags();
@@ -143,6 +170,7 @@
         if (response.IsSuccessStatusCode)
         {
             tags = await response.Content.ReadFromJsonAsync<List<TagResponse>>();
+            tags=tags.OrderByDescending(x=>x.UpdateTime).ToList();
         }
         else
         {
@@ -199,6 +227,7 @@
         public string DataType { get; set; }
         public string? Desc { get; set; }
         public string? Value { get; set; }
+        public DateTime? UpdateTime { get; set; }
     }
 
 }

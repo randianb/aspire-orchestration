@@ -2,6 +2,7 @@
 @inject IHttpClientFactory HttpClientFactory
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using Newtonsoft.Json
 @using Newtonsoft.Json.Linq
 
 <PageTitle>Sender</PageTitle>
@@ -33,14 +34,18 @@
                     <label for="sendertype" class="form-label">SenderType:</label>
                     <InputSelect id="senderType" @bind-Value="newSender.SenderType" class="form-control">
                         <option value="1">Dk</option>
+                        <option value="10">InfluxDB</option>
+                        <option value="20">InfluxDB2</option>
                     </InputSelect>
                 </div>
                 <div class="mb-3">
                     <label for="optionsConf" class="form-label">Options:</label>
+                    <label for="optionsConf" class="form-label">urlInput:</label>
                     <InputText id="url" @bind-Value="urlInput" class="form-control"/>
+                    <label for="optionsConf" class="form-label">esnInput:</label>
                     <InputText id="esnInput" @bind-Value="esnInput" class="form-control"/>
+                    <label for="optionsConf" class="form-label">controlInput:</label>
                     <InputText id="controlInput" @bind-Value="controlInput" class="form-control"/>
-
                 </div>
                 <div class="mb-3">
                     <label for="desc" class="form-label">Desc:</label>
@@ -65,7 +70,7 @@
                                 <p class="mb-1">@sender.MachineCode</p>
                                 <p class="mb-1">@sender.DriverCode</p>
                                 <p class="mb-1">@sender.SenderType</p>
-                                <p class="mb-1">@sender.Options</p>
+                                <p class="mb-1">@JsonConvert.SerializeObject(sender.Options)</p>
                                 <p class="mb-1">@sender.Desc</p>
                             </div>
                             <button @onclick="() => DeleteSender(sender.Id)" class="btn btn-link text-danger">
