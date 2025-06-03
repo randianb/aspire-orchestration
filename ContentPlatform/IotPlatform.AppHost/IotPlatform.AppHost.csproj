@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0"></Sdk>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+    <UserSecretsId>4929ae5d-f234-4df1-a9a7-3e78f081c0f8</UserSecretsId>
+   <RootNamespace>IotPlatform.AppHost</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.2.1" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.2.1" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="9.2.1" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="9.2.1" />
+    <PackageReference Include="System.Text.Json" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IotPlatform.Api\IotPlatform.Api.csproj" />
+    <ProjectReference Include="..\IotPlatform.Presentation\IotPlatform.Presentation.csproj" />
+    <ProjectReference Include="..\IotPlatform.Reporting.Api\IotPlatform.Reporting.Api.csproj" />
+  </ItemGroup>
+
+</Project>

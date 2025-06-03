@@ -1,0 +1,168 @@
+﻿@page "/Channel"
+@inject IHttpClientFactory HttpClientFactory
+@using System.Text.Json
+@using System.Text.Json.Serialization
+
+<PageTitle>Channel</PageTitle>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Channel Management</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h2 class="mb-3">Create New Channel</h2>
+            <EditForm Model="@newChannel" OnValidSubmit="CreateChannel" class="mb-4">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="channelCode" class="form-label">ChannelCode:</label>
+                    <InputText id="channelCode" @bind-Value="newChannel.ChannelCode" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="isSchedule" class="form-label">IsSchedule:</label>
+                    <InputSelect id="isSchedule" @bind-Value="newChannel.IsSchedule" class="form-control">
+                        <option value="true">是</option>
+                        <option value="false">否</option>
+                    </InputSelect>
+                </div>
+                <div class="mb-3">
+                    <label for="topic" class="form-label">Topic:</label>
+                    <InputText id="content" @bind-Value="newChannel.Topic" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="desc" class="form-label">Desc:</label>
+                    <InputText id="content" @bind-Value="newChannel.Desc" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="senderCodes" class="form-label">SenderCodes (comma-separated):</label>
+                    <InputText id="senderCodes" @bind-Value="sendersInput" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="tagCodes" class="form-label">Tags (comma-separated):</label>
+                    <InputText id="tagCodes" @bind-Value="tagsInput" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Create Channel</button>
+            </EditForm>
+        </div>
+
+        <div class="col-md-6">
+            <h2 class="mb-3">Channel List</h2>
+            <button @onclick="LoadChannels" class="btn btn-primary mb-3">Refresh Channels</button>
+            @if (channels != null && channels.Any())
+            {
+                <div class="list-group">
+                    @foreach (var channel in channels)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-1">@channel.ChannelCode</h5>
+                                <p class="mb-1">@channel.IsSchedule</p>
+                                <p class="mb-1">@channel.Topic</p>
+                                <p class="mb-1">@channel.Desc</p>
+                                <small>SenderCodes: @string.Join(", ", channel.SenderCodes)</small>
+                                <small>Tags: @string.Join(", ", channel.TagCodes)</small>
+                            </div>
+                            <button @onclick="() => DeleteChannel(channel.Id)" class="btn btn-link text-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>No channels found.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private ChannelRequest newChannel = new();
+    private string tagsInput = "";
+    private string sendersInput = "";
+    private List<ChannelResponse> channels;
+    private HttpClient httpClient;
+
+    protected override void OnInitialized()
+    {
+        httpClient = HttpClientFactory.CreateClient("IotPlatform.Api");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChannels();
+    }
+
+    private async Task CreateChannel()
+    {
+        newChannel.TagCodes = tagsInput.Split(',').Select(t => t.Trim()).ToList();
+        newChannel.SenderCodes = sendersInput.Split(',').Select(t => t.Trim()).ToList();
+        var response = await httpClient.PostAsJsonAsync("/api/channels", newChannel);
+        if (response.IsSuccessStatusCode)
+        {
+            // Clear the form
+            newChannel = new();
+            tagsInput = "";
+            sendersInput = "";
+
+            // Refresh the channel list
+            await LoadChannels();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+        }
+    }
+
+    private async Task LoadChannels()
+    {
+        var response = await httpClient.GetAsync("/api/channels");
+        if (response.IsSuccessStatusCode)
+        {
+            channels = await response.Content.ReadFromJsonAsync<List<ChannelResponse>>();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+            channels = new List<ChannelResponse>();
+        }
+    }
+
+    private async Task DeleteChannel(Guid id)
+    {
+        var response = await httpClient.DeleteAsync($"/api/channels/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadChannels();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+        }
+    }
+
+    public class ChannelRequest
+    {
+        public string ChannelCode { get; set; }
+        public bool IsSchedule { get; set; } = false;
+        public string Topic { get; set; }
+        public string Desc { get; set; }
+        public List<string>  SenderCodes { get; set; }
+        
+        public List<string> TagCodes { get; set; } 
+    }
+
+    public class ChannelResponse
+    {
+        public Guid Id { get; set; }
+        public string ChannelCode { get; set; }
+        public bool IsSchedule { get; set; } = false;
+        public string Topic { get; set; }
+        public string Desc { get; set; }
+        public List<string>  SenderCodes { get; set; }
+        
+        public List<string> TagCodes { get; set; } = new();
+    }
+}

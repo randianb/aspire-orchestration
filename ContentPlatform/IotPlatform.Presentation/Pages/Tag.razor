@@ -1,0 +1,233 @@
+﻿@page "/Tag"
+@inject IHttpClientFactory HttpClientFactory
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@using System.Text.Json.Serialization
+@using Newtonsoft.Json.Linq
+
+<PageTitle>Tag</PageTitle>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Tag Management</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h2 class="mb-3">Create New Tag</h2>
+            <EditForm Model="@newTag" OnValidSubmit="CreateTag" class="mb-4">
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
+
+                <div class="mb-3">
+                    <label for="groupCode" class="form-label">GroupCode:</label>
+                    <InputText id="groupCode" @bind-Value="newTag.GroupCode" class="form-control"/>
+                </div>
+                <div class="mb-3">
+                    <label for="driverCode" class="form-label">DriverCode:</label>
+                    <InputText id="driverCode" @bind-Value="newTag.DriverCode" class="form-control"/>
+                </div>
+
+                <div class="mb-3">
+                    <label for="equipCode" class="form-label">EquipCode:</label>
+                    <InputText id="equipCode" @bind-Value="newTag.EquipCode" class="form-control"/>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tagCode" class="form-label">TagCode:</label>
+                    <InputText id="tagCode" @bind-Value="newTag.TagCode" class="form-control"/>
+                </div>
+
+                <div class="mb-3">
+                    <label for="dataType" class="form-label">DataType:</label>
+                    <InputSelect id="dataType" @bind-Value="newTag.DataType" class="form-control">
+                        <option value="boolean">Boolean</option>
+                        <option value="string">String</option>
+                        <option value="double">Double</option>
+                        <option value="single">Single</option>
+                        <option value="decimal">Decimal</option>
+                        <option value="bool">Bool</option>
+                        <option value="char">Char</option>
+                        <option value="byte">Byte</option>
+                        <option value="single">Single</option>
+                        <option value="int16">Int16</option>
+                        <option value="uInt16">UInt16</option>
+                        <option value="int32">Int32</option>
+                        <option value="uInt32">UInt32</option>
+                        <option value="int64">Int64</option>
+                        <option value="uInt64">UInt64</option>
+                        <option value="dateTime">DateTime</option>
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label for="desc" class="form-label">Desc:</label>
+                    <InputText id="desc" @bind-Value="newTag.Desc" class="form-control"/>
+                </div>
+
+
+                <button type="submit" class="btn btn-primary">Create Tag</button>
+            </EditForm>
+        </div>
+
+        <div class="col-md-6">
+            <h2 class="mb-3">Tag List</h2>
+            <button @onclick="LoadTags" class="btn btn-primary mb-3">Refresh Tags</button>
+            @if (tags != null && tags.Any())
+            {
+                <div class="list-group">
+                    @foreach (var driver in tags)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-1">@driver.TagCode</h5>
+                                <p class="mb-1">@driver.GroupCode </p>
+                                <p class="mb-1">@driver.DriverCode </p>
+                                <p class="mb-1">@driver.EquipCode </p>
+                                <p class="mb-1">@driver.DataType </p>
+                                <p class="mb-1">@driver.Desc </p>
+                                <p class="mb-2">@driver.Value </p>
+                                <p class="mb-2">@driver.UpdateTime</p>
+                            </div>
+                            <button @onclick="() => DeleteTag(driver.Id)" class="btn btn-link text-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button @onclick="() => ReadTag(driver.Id)" class="btn btn-link text-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>No tags found.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private TagRequest newTag = new();
+    private string tagsInput = "";
+    private List<TagResponse> tags;
+    private HttpClient httpClient;
+    private  HubConnection hubConnection;
+
+    protected override async void OnInitialized()
+    {
+        try
+        {
+            httpClient = HttpClientFactory.CreateClient("IotPlatform.Api");
+             hubConnection = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri(httpClient.BaseAddress.AbsoluteUri+"api/taghub"))
+                .Build();
+
+            hubConnection.On<string>("SendTagValueUpdate", async ( message) =>
+            {
+                await LoadTags();
+                await InvokeAsync(StateHasChanged);
+            });
+
+            await hubConnection.StartAsync();
+        }
+        catch (Exception e)
+        {
+            throw; // TODO 处理异常
+        }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTags();
+    }
+
+    private async Task CreateTag()
+    {
+        // newTag.Tags = tagsInput.Split(',').Select(t => t.Trim()).ToList();
+        var response = await httpClient.PostAsJsonAsync("/api/tags", newTag);
+        if (response.IsSuccessStatusCode)
+        {
+            // Clear the form
+            newTag = new();
+            tagsInput = "";
+
+            // Refresh the driver list
+            await LoadTags();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+        }
+    }
+
+    private async Task LoadTags()
+    {
+        var response = await httpClient.GetAsync("/api/tags");
+        if (response.IsSuccessStatusCode)
+        {
+            tags = await response.Content.ReadFromJsonAsync<List<TagResponse>>();
+            tags=tags.OrderByDescending(x=>x.UpdateTime).ToList();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+            tags = new List<TagResponse>();
+        }
+    }
+
+    private async Task DeleteTag(Guid id)
+    {
+        var response = await httpClient.DeleteAsync($"/api/tags/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadTags();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+        }
+    }
+
+    private async Task ReadTag(Guid id)
+    {
+        var response = await httpClient.PostAsJsonAsync($"/api/tag/read/{id}", "");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadTags();
+        }
+        else
+        {
+            // Handle error - you might want to display an error message
+        }
+    }
+
+    public class TagRequest
+    {
+        public string? GroupCode { get; set; }
+        public string? DriverCode { get; set; }
+        public string? EquipCode { get; set; }
+        public string TagCode { get; set; }
+        public string DataType { get; set; }
+        public string? Desc { get; set; }
+        public string? Value { get; set; }
+    }
+
+    public class TagResponse
+    {
+        [JsonPropertyName("id")] public Guid Id { get; set; }
+
+        public string? GroupCode { get; set; }
+        public string? DriverCode { get; set; }
+        public string? EquipCode { get; set; }
+        public string TagCode { get; set; }
+        public string DataType { get; set; }
+        public string? Desc { get; set; }
+        public string? Value { get; set; }
+        public DateTime? UpdateTime { get; set; }
+    }
+
+}

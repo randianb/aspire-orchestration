@@ -1,37 +1,37 @@
 services:
-  contentplatform-api:
-    image: ${DOCKER_REGISTRY-}contentplatform-api
-    container_name: ContentPlatform.Api
+  iotplatform-api:
+    image: ${DOCKER_REGISTRY-}iotplatform-api
+    container_name: IotPlatform.Api
     build:
       context: .
-      dockerfile: ContentPlatform.Api/Dockerfile
+      dockerfile: IotPlatform.Api/Dockerfile
     ports:
       - "5000:8080"
       - "5001:8081"
 
-  contentplatform-reporting-api:
-    image: ${DOCKER_REGISTRY-}contentplatform-reporting-api
-    container_name: ContentPlatform.Reporting.Api
+  iotplatform-reporting-api:
+    image: ${DOCKER_REGISTRY-}iotplatform-reporting-api
+    container_name: IotPlatform.Reporting.Api
     build:
       context: .
-      dockerfile: ContentPlatform.Reporting.Api/Dockerfile
+      dockerfile: IotPlatform.Reporting.Api/Dockerfile
     ports:
       - "6000:8080"
       - "6001:8081"
 
-  contentplatform-presentation:
-    image: contentplatform-ui:latest
-    container_name: ContentPlatform.Presentation
+  iotplatform-presentation:
+    image: iotplatform-ui:latest
+    container_name: IotPlatform.Presentation
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "3000:80"
       
-  contentplatform-db:
+  iotplatform-db:
     image: postgres:latest
-    container_name: ContentPlatform.Db
+    container_name: IotPlatform.Db
     environment:
-      - POSTGRES_DB=contentplatform
+      - POSTGRES_DB=iotplatform
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
@@ -39,10 +39,10 @@ services:
     ports:
       - 5432:5432
 
-  contentplatform-mq:
+  iotplatform-mq:
     image: rabbitmq:management
-    container_name: ContentPlatform.RabbitMq
-    hostname: contentplatform-mq
+    container_name: IotPlatform.RabbitMq
+    hostname: iotplatform-mq
     volumes:
       - ./.containers/queue/data/:/var/lib/rabbitmq
       - ./.containers/queue/log/:/var/log/rabbitmq

@@ -6,8 +6,8 @@
     <ProjectGuid>56f62bc3-7646-4559-92eb-499120179413</ProjectGuid>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/swagger</DockerServiceUrl>
-    <DockerServiceName>contentplatform-api</DockerServiceName>
-	  <DockerComposeProjectName>content-platform</DockerComposeProjectName>
+    <DockerServiceName>iotplatform-api</DockerServiceName>
+	  <DockerComposeProjectName>iot-platform</DockerComposeProjectName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">

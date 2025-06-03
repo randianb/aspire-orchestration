@@ -1,0 +1,73 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <UserSecretsId>91ed30e5-3b99-46bd-a6b2-34049ae1200e</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+   <RootNamespace>IotPlatform.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Carter" Version="9.0.0" />
+    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="9.2.1" />
+    <PackageReference Include="InfluxDB.Client" Version="4.19.0-dev.15190" />
+    <PackageReference Include="InfluxDB.LineProtocol" Version="1.2.0-dev-00029" />
+    <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.2.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="Mapster" Version="7.4.0" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.0" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
+    <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.NewtonsoftJson" Version="2.2.0" />
+
+    <PackageReference Include="Tipa.Commons" Version="1.0.0" />
+    <PackageReference Include="Tipa.EFCoreExtend" Version="1.0.0" />
+    <PackageReference Include="Tipa.FunctionQuery" Version="1.0.0" />
+    <PackageReference Include="Tipa.JsonExtern" Version="1.0.0" />
+    <PackageReference Include="Tipa.ReflectionHelper" Version="1.0.0" />
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
+
+    <PackageReference Include="OPCUaClient" Version="1.7.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.11.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.11.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.11.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" />
+    <PackageReference Include="TitaniumAS.Opc.Client.Core.Design" Version="1.0.2.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="ProgramExtensions.cs">
+      <DependentUpon>Program.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\IotPlatform.ServiceDefaults\IotPlatform.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Contracts\Contracts.csproj" />
+    <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Schema\" />
+  </ItemGroup>
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="app\publish\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config" />
+    <_ContentIncludedByDefault Remove="app\publish\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll.config" />
+    <_ContentIncludedByDefault Remove="app\publish\web.config" />
+    <_ContentIncludedByDefault Remove="app\publish\appsettings.Development.json" />
+    <_ContentIncludedByDefault Remove="app\publish\appsettings.json" />
+    <_ContentIncludedByDefault Remove="app\publish\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.deps.json" />
+    <_ContentIncludedByDefault Remove="app\publish\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="app\publish\ContentPlatform.Api.deps.json" />
+    <_ContentIncludedByDefault Remove="app\publish\ContentPlatform.Api.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="app\publish\ContentPlatform.Api.staticwebassets.endpoints.json" />
+  </ItemGroup>
+
+</Project>
